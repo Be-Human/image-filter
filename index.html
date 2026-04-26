@@ -379,16 +379,21 @@
         function applyFilters() {
             if (!originalImageData) return;
             
+            const brightness = controls.brightness.value / 100;
+            const contrast = controls.contrast.value / 100;
+            const saturation = controls.saturation.value / 100;
+            const blur = controls.blur.value;
+            
+            if (brightness === 1 && contrast === 1 && saturation === 1 && blur === 0) {
+                ctx.putImageData(originalImageData, 0, 0);
+                return;
+            }
+            
             const imageData = new ImageData(
                 new Uint8ClampedArray(originalImageData.data),
                 originalImageData.width,
                 originalImageData.height
             );
-            
-            const brightness = controls.brightness.value / 100;
-            const contrast = controls.contrast.value / 100;
-            const saturation = controls.saturation.value / 100;
-            const blur = controls.blur.value;
             
             applyBrightnessContrast(imageData, brightness, contrast);
             applySaturation(imageData, saturation);
@@ -411,20 +416,23 @@
         
         function applyBrightnessContrast(imageData, brightness, contrast) {
             const data = imageData.data;
-            const contrastFactor = (259 * (contrast * 255 + 255)) / (255 * (259 - contrast * 255));
             
             for (let i = 0; i < data.length; i += 4) {
                 let r = data[i];
                 let g = data[i + 1];
                 let b = data[i + 2];
                 
-                r = r * brightness;
-                g = g * brightness;
-                b = b * brightness;
+                if (brightness !== 1) {
+                    r = r * brightness;
+                    g = g * brightness;
+                    b = b * brightness;
+                }
                 
-                r = contrastFactor * (r - 128) + 128;
-                g = contrastFactor * (g - 128) + 128;
-                b = contrastFactor * (b - 128) + 128;
+                if (contrast !== 1) {
+                    r = ((r / 255 - 0.5) * contrast + 0.5) * 255;
+                    g = ((g / 255 - 0.5) * contrast + 0.5) * 255;
+                    b = ((b / 255 - 0.5) * contrast + 0.5) * 255;
+                }
                 
                 data[i] = Math.max(0, Math.min(255, r));
                 data[i + 1] = Math.max(0, Math.min(255, g));
