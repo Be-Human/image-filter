@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片滤镜编辑器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px 40px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 30px;
+            gap: 30px;
+        }
+        
+        .canvas-container {
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .canvas-wrapper {
+            width: 100%;
+            max-width: 600px;
+            height: 400px;
+            border: 3px dashed #e0e0e0;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fafafa;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .canvas-wrapper.has-image {
+            border-style: solid;
+            border-color: #667eea;
+        }
+        
+        #canvas {
+            max-width: 100%;
+            max-height: 100%;
+            display: none;
+        }
+        
+        .placeholder {
+            text-align: center;
+            color: #999;
+        }
+        
+        .placeholder svg {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+        
+        .controls-container {
+            flex: 0 0 350px;
+            min-width: 280px;
+        }
+        
+        .controls {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+        }
+        
+        .control-group {
+            margin-bottom: 25px;
+        }
+        
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+        
+        .control-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .control-label span:first-child {
+            font-size: 15px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .control-label span:last-child {
+            font-size: 14px;
+            color: #667eea;
+            font-weight: 600;
+            background: #eef2ff;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #e0e0e0;
+            outline: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+            transition: transform 0.2s;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 25px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-upload {
+            width: 100%;
+            margin-top: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-upload:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-reset {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-reset:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+        
+        .btn-download {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+        
+        .btn-download:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(17, 153, 142, 0.4);
+        }
+        
+        .btn-download:disabled,
+        .btn-reset:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        #fileInput {
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .controls-container {
+                flex: none;
+                width: 100%;
+            }
+            
+            .canvas-wrapper {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>图片滤镜编辑器</h1>
+            <p>上传图片，调整滤镜效果，下载处理后的图片</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="canvas-container">
+                <div class="canvas-wrapper" id="canvasWrapper">
+                    <canvas id="canvas"></canvas>
+                    <div class="placeholder" id="placeholder">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                            <circle cx="8.5" cy="8.5" r="1.5"/>
+                            <polyline points="21 15 16 10 5 21"/>
+                        </svg>
+                        <p>请上传图片开始编辑</p>
+                    </div>
+                </div>
+                <button class="btn-upload" onclick="document.getElementById('fileInput').click()">
+                    上传图片
+                </button>
+                <input type="file" id="fileInput" accept="image/*">
+            </div>
+            
+            <div class="controls-container">
+                <div class="controls">
+                    <div class="control-group">
+                        <div class="control-label">
+                            <span>亮度</span>
+                            <span id="brightnessValue">100%</span>
+                        </div>
+                        <input type="range" id="brightness" min="0" max="200" value="100">
+                    </div>
+                    
+                    <div class="control-group">
+                        <div class="control-label">
+                            <span>对比度</span>
+                            <span id="contrastValue">100%</span>
+                        </div>
+                        <input type="range" id="contrast" min="0" max="200" value="100">
+                    </div>
+                    
+                    <div class="control-group">
+                        <div class="control-label">
+                            <span>饱和度</span>
+                            <span id="saturationValue">100%</span>
+                        </div>
+                        <input type="range" id="saturation" min="0" max="300" value="100">
+                    </div>
+                    
+                    <div class="control-group">
+                        <div class="control-label">
+                            <span>模糊</span>
+                            <span id="blurValue">0px</span>
+                        </div>
+                        <input type="range" id="blur" min="0" max="20" value="0">
+                    </div>
+                </div>
+                
+                <div class="buttons">
+                    <button class="btn-reset" id="resetBtn" disabled onclick="resetFilters()">
+                        重置
+                    </button>
+                    <button class="btn-download" id="downloadBtn" disabled onclick="downloadImage()">
+                        下载
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const fileInput = document.getElementById('fileInput');
+        const canvasWrapper = document.getElementById('canvasWrapper');
+        const placeholder = document.getElementById('placeholder');
+        const resetBtn = document.getElementById('resetBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        
+        let originalImage = null;
+        let originalImageData = null;
+        
+        const controls = {
+            brightness: { element: document.getElementById('brightness'), value: 100, display: document.getElementById('brightnessValue') },
+            contrast: { element: document.getElementById('contrast'), value: 100, display: document.getElementById('contrastValue') },
+            saturation: { element: document.getElementById('saturation'), value: 100, display: document.getElementById('saturationValue') },
+            blur: { element: document.getElementById('blur'), value: 0, display: document.getElementById('blurValue') }
+        };
+        
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    originalImage = img;
+                    
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    
+                    ctx.drawImage(img, 0, 0);
+                    originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    
+                    canvas.style.display = 'block';
+                    canvasWrapper.classList.add('has-image');
+                    placeholder.style.display = 'none';
+                    
+                    resetBtn.disabled = false;
+                    downloadBtn.disabled = false;
+                    
+                    applyFilters();
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+        
+        Object.keys(controls).forEach(key => {
+            controls[key].element.addEventListener('input', function() {
+                controls[key].value = parseFloat(this.value);
+                
+                if (key === 'blur') {
+                    controls[key].display.textContent = this.value + 'px';
+                } else {
+                    controls[key].display.textContent = this.value + '%';
+                }
+                
+                applyFilters();
+            });
+        });
+        
+        function applyFilters() {
+            if (!originalImageData) return;
+            
+            const imageData = new ImageData(
+                new Uint8ClampedArray(originalImageData.data),
+                originalImageData.width,
+                originalImageData.height
+            );
+            
+            const brightness = controls.brightness.value / 100;
+            const contrast = controls.contrast.value / 100;
+            const saturation = controls.saturation.value / 100;
+            const blur = controls.blur.value;
+            
+            applyBrightnessContrast(imageData, brightness, contrast);
+            applySaturation(imageData, saturation);
+            
+            ctx.putImageData(imageData, 0, 0);
+            
+            if (blur > 0) {
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.drawImage(canvas, 0, 0);
+                
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.filter = `blur(${blur}px)`;
+                ctx.drawImage(tempCanvas, 0, 0);
+                ctx.filter = 'none';
+            }
+        }
+        
+        function applyBrightnessContrast(imageData, brightness, contrast) {
+            const data = imageData.data;
+            const contrastFactor = (259 * (contrast * 255 + 255)) / (255 * (259 - contrast * 255));
+            
+            for (let i = 0; i < data.length; i += 4) {
+                let r = data[i];
+                let g = data[i + 1];
+                let b = data[i + 2];
+                
+                r = r * brightness;
+                g = g * brightness;
+                b = b * brightness;
+                
+                r = contrastFactor * (r - 128) + 128;
+                g = contrastFactor * (g - 128) + 128;
+                b = contrastFactor * (b - 128) + 128;
+                
+                data[i] = Math.max(0, Math.min(255, r));
+                data[i + 1] = Math.max(0, Math.min(255, g));
+                data[i + 2] = Math.max(0, Math.min(255, b));
+            }
+        }
+        
+        function applySaturation(imageData, saturation) {
+            const data = imageData.data;
+            
+            for (let i = 0; i < data.length; i += 4) {
+                let r = data[i];
+                let g = data[i + 1];
+                let b = data[i + 2];
+                
+                const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+                
+                r = gray + (r - gray) * saturation;
+                g = gray + (g - gray) * saturation;
+                b = gray + (b - gray) * saturation;
+                
+                data[i] = Math.max(0, Math.min(255, r));
+                data[i + 1] = Math.max(0, Math.min(255, g));
+                data[i + 2] = Math.max(0, Math.min(255, b));
+            }
+        }
+        
+        function resetFilters() {
+            Object.keys(controls).forEach(key => {
+                let defaultValue;
+                switch (key) {
+                    case 'brightness':
+                    case 'contrast':
+                    case 'saturation':
+                        defaultValue = 100;
+                        break;
+                    case 'blur':
+                        defaultValue = 0;
+                        break;
+                    default:
+                        defaultValue = 100;
+                }
+                
+                controls[key].value = defaultValue;
+                controls[key].element.value = defaultValue;
+                
+                if (key === 'blur') {
+                    controls[key].display.textContent = defaultValue + 'px';
+                } else {
+                    controls[key].display.textContent = defaultValue + '%';
+                }
+            });
+            
+            if (originalImage) {
+                ctx.drawImage(originalImage, 0, 0);
+                originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                applyFilters();
+            }
+        }
+        
+        function downloadImage() {
+            if (!canvas.width || !canvas.height) return;
+            
+            const link = document.createElement('a');
+            link.download = 'filtered-image.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+    </script>
+</body>
+</html>
